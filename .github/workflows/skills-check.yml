@@ -1,0 +1,24 @@
+name: skills check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: 校验技能文件规范
+        run: python3 scripts/check.py
+      - name: README 与技能文件保持同步
+        run: |
+          python3 scripts/build.py
+          git diff --exit-code README.md || (
+            echo "::error::README.md 不是最新构建结果。请本地跑 python3 scripts/build.py 后再提交。"
+            exit 1
+          )
