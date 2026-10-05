@@ -3,6 +3,7 @@
 
 用法: python3 scripts/build.py
 每条技能一个文件，README 每次全量重新生成，不要手改 README。
+条目按分类分组、组内按原 id 排序，展示编号为 001-500 顺排。
 """
 import pathlib
 import re
@@ -28,6 +29,21 @@ CATEGORIES = [
     ("组合技", "🔗", "两个能力串起来，1+1 大于 2"),
     ("实话实说", "💡", "Muse 做不到的事，先说清"),
 ]
+
+
+# “今晚就能用的 10 招”用的手写短描述（比技能原文的痛点更精简），按源文件原 id 索引
+TOP10_BLURBS = {
+    "004": "各种 App 会员自动续费，钱扣了才发现，一年白白扔掉好几百",
+    "008": "想买的东西天天刷价格，降价了不知道，买完第二天降价气到拍大腿",
+    "018": "账面突然绿了，还以为自己亏了钱，其实只是除息",
+    "027": "README 写得像说明书，访客三秒划走",
+    "039": "客户的付款确认混在广告堆里，等你看见已经晚了",
+    "046": "一份简历海投 50 家全石沉大海，HR 六秒就扫完了",
+    "052": "去年忘了结婚纪念日，被念叨了整整三个月",
+    "073": "一肚子话写出来却像流水账，先搭骨架再填肉",
+    "093": "手机里八千张照片，找张合影得翻半小时",
+    "110": "先说清 Muse 的边界，免得你对它有误会",
+}
 
 
 def parse_skill(path: pathlib.Path) -> dict:
@@ -62,11 +78,13 @@ def parse_skill(path: pathlib.Path) -> dict:
 
 def render_skill(s: dict) -> str:
     # 每条技能渲染为可折叠的 <details>；锚点放在 details 外面，
-    # 顶部“新手先看”表格的链接跳过来时正好落在折叠条目上。
+    # 顶部“今晚就能用的 10 招”的链接跳过来时正好落在折叠条目上。
+    # 展示编号 seq 为文档顺排（001-500），与源文件原 id 无关。
+    seq = s["seq"]
     short_pain = s["pain"][:28] + ("…" if len(s["pain"]) > 28 else "")
-    out = [f'<a id="skill-{s["id"]}"></a>', "",
-           "<details>", f"<summary><b>{s['id']}. {s['title']}</b> —— {short_pain}</summary>",
-           "", s["pain"], "", "**你可以这样跟 Muse 说：**", ""]
+    out = [f'<a id="skill-{seq}"></a>', "",
+           "<details>", f"<summary><b>{seq}. {s['title']}</b> —— {short_pain}</summary>",
+           "", s["pain"], "", "**三句话术，复制就用：**", ""]
     for i, step in enumerate(s["steps"], 1):
         out.append(f"{i}. {step}")
         out.append("")
@@ -83,12 +101,18 @@ def main() -> None:
     for s in skills:
         by_cat.setdefault(s["category"], []).append(s)
 
-    total = len(skills)
-    top10 = [s for s in skills if s["top10"]][:10]
+    # 文档顺排编号 001-500
+    ordered: list[dict] = []
+    for name, _emoji, _desc in CATEGORIES:
+        ordered.extend(by_cat.get(name, []))
+    for i, s in enumerate(ordered, 1):
+        s["seq"] = f"{i:03d}"
+    total = len(ordered)
+    top10 = [s for s in ordered if s["top10"]][:10]
 
     L: list[str] = []
-    L += ["# Muse 中文技能库", "",
-          f"*{total} 条中文原创 Muse 玩法：一个真痛点 + 三步照做 + 一句大实话，复制粘贴就能用。*",
+    L += ["# Muse 500 招", "",
+          f"*500 个把 Muse 用出花的中文真招——专治各种\"明明可以让 AI 干\"的小麻烦。*",
           "",
           "*🥚 彩蛋：这个 README 是 Muse 自己写的。对，它在给自己写说明书。*",
           "",
@@ -96,39 +120,28 @@ def main() -> None:
           "![原创](https://img.shields.io/badge/全部-中文原创-orange)",
           "![PRs](https://img.shields.io/badge/PRs-welcome-brightgreen)",
           "",
-          "> 这是我平时真在用的 Muse 玩法合集：搞钱、看财报、做账号、盯降价、整文件……每条只解决一个具体的小麻烦，不讲虚的。",
+          "> 这是我每天真在用的 Muse 玩法：搞钱、看财报、做账号、盯降价、整文件……",
+          "> 每招只干一件事：**说中你的痛**，**给你三句话术**，再附一句**实话**告诉你哪步它搞不定、必须亲手来。",
           ">",
-          "> 每条固定三段式：**痛点**（一句话说中你）→ **三步**（复制去跟 Muse 说）→ **实话**（哪一步它搞不定、必须你亲手来）。",
-          ">",
-          "> 条目太多刷不到底？每条都是折叠的，点开才展开；邀请码只在这一页出现一次，不会在每条里刷屏。",
+          "> 500 条刷不到底？全是折叠的，点开才展开。邀请码这页只出现一次，不会在每条里刷屏——你懂的。",
           "",
-          "## 🧭 先对齐：Muse 是什么",
+          "## 怎么用",
           "",
-          "Muse 是 Meta 的 AI 个人助理。经你授权后，它能读你的邮箱、日历、健康数据、银行账单，帮你查、帮你记、帮你盯。你动嘴，它动手。",
+          "不用从头读。直接 Ctrl+F 搜你正头疼的事，点开那条，把三句话术复制给 Muse 就行。",
           "",
-          f"🆕 还没用过？注册时填我的邀请码 **{INVITE_CODE}**",
+          f"Muse 是 Meta 的 AI 个人助理，经你授权能读邮箱、日历、健康数据、银行账单。你动嘴，它动手。还没用过？注册填我邀请码 **{INVITE_CODE}**。",
           "",
-          "## ⚡ 30 秒上手",
+          "觉得有用就点个 ⭐ Star，顺手转发给天天被琐事追着跑的朋友。",
           "",
-          "1. **挑一条**：从下面「先看这 10 条」里找一件你正头疼的事，点开折叠条目",
+          "## 今晚就能用的 10 招",
           "",
-          "2. **复制三步**：把三步话术粘贴给 Muse，照着说一遍就行",
-          "",
-          "3. **觉得有用**：右上角点个 ⭐ Star，转发给同样被琐事追着跑的朋友",
-          "",
-          "## 🎯 先看这 10 条",
-          "",
-          "| 技能 | 解决什么 |",
-          "| --- | --- |",
           ]
-    for s in top10:
-        short_pain = s["pain"][:28] + ("…" if len(s["pain"]) > 28 else "")
-        L.append(f'| [{s["id"]}. {s["title"]}](#skill-{s["id"]}) | {short_pain} |')
-    L += ["", "## 🗂 全部分类", ""]
-    for name, emoji, desc in CATEGORIES:
-        n = len(by_cat.get(name, []))
-        L.append(f"- {emoji} {name}（{n} 条）— {desc}")
-    L += ["", "---", ""]
+    for i, s in enumerate(top10, 1):
+        blurb = TOP10_BLURBS.get(s["id"], s["pain"])
+        L.append(f'{i}. [{s["seq"]}. {s["title"]}](#skill-{s["seq"]})——{blurb}')
+    L += ["", "## 十二个场景，500 招全在这", ""]
+    idx = " · ".join(f"**{emoji} {name}** {len(by_cat.get(name, []))}" for name, emoji, _d in CATEGORIES)
+    L += [idx, "", "---"]
     for name, emoji, desc in CATEGORIES:
         items = by_cat.get(name, [])
         if not items:
@@ -138,12 +151,7 @@ def main() -> None:
             L.append(render_skill(s))
         L += ["---", ""]
     L += ["## 🗓️ 更新记录", "",
-          "- 2026-10-05 v2.0：500 条，全条目折叠式，头部文案重写",
-          "- 2026-10-05 v1.0：110 条首发（搞钱/金融/独立开发加重版）",
-          "",
-          "## 📣 内容运营",
-          "",
-          "想把这里的技能改成 X（推特）帖子？看 [docs/x-content-plan.md](docs/x-content-plan.md)：一条技能 = 一条帖子的改写公式。",
+          "- 2026-10-05 v1.0：500 条首发，全条目折叠式",
           "",
           "## 🤝 来加一条",
           "",
