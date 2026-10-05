@@ -112,6 +112,7 @@ def main() -> None:
 
     L: list[str] = []
     L += ["# Muse 500 招", "",
+          "🌐 [English version](README_en.md)", "",
           f"*500 个把 Muse 用出花的中文真招——专治各种\"明明可以让 AI 干\"的小麻烦。*",
           "",
           "*🥚 彩蛋：这个 README 是 Muse 自己写的。对，它在给自己写说明书。*",
