@@ -82,7 +82,7 @@ def main() -> int:
 
         words = len(re.sub(r"\s", "", body))
         if not (120 <= words <= 240):
-            issues.append(f"{slug}: 正文 {words} 字（要求 120–220 字）")
+            issues.append(f"{slug}: 正文 {words} 字（要求 120–240 字）")
         if "邀请码" in body:
             issues.append(f"{slug}: 正文不许出现「邀请码」（构建脚本会自动追加）")
 
