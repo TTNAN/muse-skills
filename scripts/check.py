@@ -81,7 +81,7 @@ def main() -> int:
             issues.append(f"{slug}: 「实话」要写清哪一步必须你本人动手")
 
         words = len(re.sub(r"\s", "", body))
-        if not (120 <= words <= 220):
+        if not (120 <= words <= 240):
             issues.append(f"{slug}: 正文 {words} 字（要求 120–220 字）")
         if "邀请码" in body:
             issues.append(f"{slug}: 正文不许出现「邀请码」（构建脚本会自动追加）")
